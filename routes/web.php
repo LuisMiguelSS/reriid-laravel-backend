@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -11,6 +13,12 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Not Found
+Route::fallback(function(Illuminate\Http\Request $request){
+    return response()->json([
+        'message' => 'The given route was not found',
+        'method' => $request->method(),
+        'user_agent' => $request->userAgent(),
+        'requested_path' => $request->fullUrl()
+    ], 404);
+})->name('notfound');
