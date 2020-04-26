@@ -6,6 +6,7 @@ use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -105,17 +106,12 @@ class AuthController extends Controller {
                             'errors' => $validator->errors()
                         ], 422);
 
-                    // Save image
-                    $image_name = $user->id. '_profile-photo.' . $request->file('photo')->getClientOriginalExtension();
-                    $path = $request->file('photo')->move(public_path('/storage/users/'), $image_name);
-                    $photo_url = url('storage/users/' . $image_name);
-
-                    // Update user's profile picture
-                    $user->profile_pic = $photo_url;
+                    // Save image & update user's profile picture
+                    $user->profile_pic = UserController::store_file($user,$request->file('photo'));
 
                 } catch(\Throwable $exc) {
                     return response()->json([
-                        'message' => 'We could not save the image'
+                        'error' => 'We could not save the image'
                     ], 500);
                 }
             }
@@ -124,13 +120,13 @@ class AuthController extends Controller {
             
             return response()->json([
                 'message' => 'User created succesfully!',
-                'user' => $user,
+                'data' => $user,
                 'access_token' => $accessToken
             ], 201);
             
         } catch (\Throwable $th) {
             return response()->json([
-                'message' => 'The user could not be added.'
+                'error' => 'The user could not be added.'
             ], 500);
         }
 
@@ -141,7 +137,7 @@ class AuthController extends Controller {
         try {
 
             auth('web')->logout();
-            $this->removeTokens($request->user());
+            $this->revoke_tokens($request->user());
 
             return response()->json([
                 'message' => 'Successfully logged out!'
@@ -149,7 +145,7 @@ class AuthController extends Controller {
 
         } catch (\Throwable $th) {
             return response()->json([
-                'message' => 'We couldn\'t log you off'
+                'error' => 'We couldn\'t log you off'
             ], 500);
         }
 
@@ -162,11 +158,11 @@ class AuthController extends Controller {
      */
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json(['data' => $request->user()]);
     }
 
     // Remove User Token
-    public function removeTokens(User $user) {
+    public function revoke_tokens(User $user) {
         $userTokens = $user->tokens;
 
         foreach($userTokens as $token) {

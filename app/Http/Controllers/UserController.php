@@ -2,74 +2,97 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
 use App\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    public function index() {
-        return response()->json(["count"=>User::all()->count(), "result"=>User::all()]);
+    public function index()
+    {
+        return response()->json(
+            [
+                'count' => User::all()->count(),
+                'data' => User::all()
+            ]
+        );
+    }
+    public function indexdeleted()
+    {
+        return response()->json(
+            [
+                'count' => User::onlyTrashed()->get()->count(),
+                'data' => User::onlyTrashed()->get()
+            ]
+        );
     }
 
-    public function show($id) {
-        return User::findOrFail($id);
+    public function show($id)
+    {
+        return response()->json(['data' => User::findOrFail($id)]);
     }
 
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
 
         $user = User::findOrFail($id);
 
         if ($user != null) {
 
-            if ($request->fullname)
+            // Get Attributes
+            
+            if ($request->fullname) {
                 $user->full_name = $request->fullname;
-            
-            if ($request->email)
+            }
+
+            if ($request->email) {
                 $user->email = $request->email;
-            
-            if ($request->birthdate)
+            }
+
+            if ($request->birthdate) {
                 $user->date_of_birth = $request->birthdate;
-            
+            }
+
             // LOCATION
             // Latitude
-            if ($request->latitude)
+            if ($request->latitude) {
                 $user->latitude = $request->latitude;
+            }
 
-            if ($request->lat)
+            if ($request->lat) {
                 $user->latitude = $request->lat;
-            
-            // Longitude
-            if ($request->longitude)
-                $user->longitude = $request->longitude;
+            }
 
-            if ($request->long)
+            // Longitude
+            if ($request->longitude) {
+                $user->longitude = $request->longitude;
+            }
+
+            if ($request->long) {
                 $user->longitude = $request->long;
-            
-            if($request->hasFile('photo')) {
+            }
+
+            if ($request->hasFile('photo')) {
                 try {
-                    
+
                     // Check the image
-                    $validator = \Validator::make($request->all(), [
-                        'photo' => 'max:2048|file|mimes:jpg,jpeg,png,gif',               
+                    $validator = Validator::make($request->all(), [
+                        'photo' => 'max:2048|file|mimes:jpg,jpeg,png,gif',
                     ]);
-                    
-                    if ($validator->fails())
+
+                    if ($validator->fails()) {
                         return response()->json([
                             'errors' => $validator->errors()
                         ], 422);
+                    }
+
+                    // Save image and update user's profile picture
+                    $user->profile_pic = $this->store_file($user, $request->file('photo'));
                     
-                    // Save image
-                    $image_name = $id . '_profile-photo.' . $request->file('photo')->getClientOriginalExtension();
-                    $path = $request->file('photo')->move(public_path('/storage/users/'), $image_name);
-                    $photo_url = url('storage/users/' . $image_name);
-
-                    // Update user's profile picture
-                    $user->profile_pic = $photo_url;
-
-                } catch(\Throwable $exc) {
+                } catch (\Throwable $exc) {
                     return response()->json([
                         'message' => 'The image could not be saved'
                     ], 500);
@@ -78,37 +101,81 @@ class UserController extends Controller
 
             // Save updates
             try {
-       
+
                 $user->save();
 
                 return response()->json([
-                    $user
+                    'data' => $user
                 ], 200);
-
             } catch (QueryException $qe) {
                 return response()->json([
                     'message' => 'The user could not be modified'
                 ], 500);
             }
-
         }
-
     }
 
-    public function destroy($id) {
+    public function destroy($id)
+    {
         try {
 
+            // Soft delete user
             $user = User::findOrFail($id);
             $user->delete();
+
+            // Delete image from disk
+            if (File::exists(public_path($user->profile_pic))) {
+                File::delete(public_path($user->profile_pic));
+
+                // Update user entry
+                $user->profile_pic = null;
+                $user->save();
+            }
 
             return response()->json([
                 'message' => 'User deleted succesfully!'
             ], 200);
-
         } catch (\Throwable $th) {
             return response()->json([
-                'message' => 'The user could not be deleted.'
+                'message' => 'The user could not be deleted.' . $th
             ], 500);
         }
+    }
+
+    /**
+     * Saves the indicated file to the passed user's folder.
+     *
+     * @param  \App\User  $user
+     * @param  \Illuminate\Support\Facades\File  $file
+     * @return null/url
+     */
+    /**
+     * store_file
+     * @return url The url of the saved file or null if there was a problem.
+     */
+    public static function store_file($user, $file)
+    {
+        if ($user == null || !($user instanceof User) || $file == null) {
+            return null;
+        }
+
+        $user_storage_folder = public_path() . '/uploads/user/' . $user->id . '/';
+
+        // Check if user folder exists
+        if (!File::exists($user_storage_folder)) {
+            File::makeDirectory($user_storage_folder, 0755, true);
+        }
+
+        // Store (and replace if necessary) file
+        $filename = $user->id . '-profile-' . date('d_M_Y') . '.' . $file->getClientOriginalExtension();
+
+        if (File::exists($user_storage_folder . $filename)) {
+            File::delete($user_storage_folder . $filename);
+        }
+
+        // Store file
+        $file->move($user_storage_folder, $filename);
+
+        return url('uploads/user/' . $user->id . '/' . $filename);
     }
 }
