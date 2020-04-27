@@ -13,7 +13,7 @@ class UserController extends Controller
     /**
      * Finds all the users in the DB
      * 
-     * @return \App\User[] List of active users (not deleted)
+     * @return \Illuminate\Http\Response List of active users (not deleted)
      * 
      */
     public function index()
@@ -34,7 +34,7 @@ class UserController extends Controller
     /**
      * Finds the soft deleted users in the DB
      * 
-     * @return \App\User[] List of deleted users
+     * @return \Illuminate\Http\Response List of deleted users
      * 
      */
     public function indexdeleted()
@@ -57,7 +57,7 @@ class UserController extends Controller
      * 
      * @param $id The user's id
      * 
-     * @return \App\User
+     * @return \Illuminate\Http\Response
      * 
      */
     public function show($id)
@@ -71,7 +71,7 @@ class UserController extends Controller
      * @param \Illuminate\Http\Request The request received from the API
      * @param $id The user's id
      * 
-     * @return \App\User The updated user if it succeeds
+     * @return \Illuminate\Http\Response The updated user if it succeeds
      */
     public function update(Request $request, $id)
     {
