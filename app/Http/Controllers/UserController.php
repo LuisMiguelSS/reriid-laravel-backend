@@ -64,6 +64,19 @@ class UserController extends Controller
     {
         return response()->json(['data' => User::findOrFail($id)]);
     }
+    
+    /**
+     * Gets the given deleted user's info
+     * 
+     * @param $id The user's id
+     * 
+     * @return \Illuminate\Http\Response
+     * 
+     */
+    public function showdeleted($id)
+    {
+        return response()->json(['data' => User::onlyTrashed()->where('id', $id)]);
+    }
 
     /**
      * Updates the given user's data.

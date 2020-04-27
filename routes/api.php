@@ -78,6 +78,7 @@ Route::group([
         // Users
         Route::group(['prefix' => 'users'], function () {
             Route::get('', 'UserController@indexdeleted')->name('deleted.users');
+            Route::post('{id}', 'UserController@showdeleted')->name('deleted.user');
         });
 
         // Posts
