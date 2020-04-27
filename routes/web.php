@@ -12,14 +12,15 @@ use Illuminate\Support\Facades\Route;
 // Not Found
 Route::fallback(function(Illuminate\Http\Request $request){
     return response()->json([
-        'message' => 'The given route was not found',
+        'message' => 'The given API route was not found',
         'method' => $request->method(),
+        'timestamp' => \Carbon\Carbon::now(),
         'user_agent' => $request->userAgent(),
-        'requested_path' => $request->fullUrl()
+        'path' => $request->fullUrl()
     ], 404);
 })->name('notfound');
 
-Auth::routes();
+\Illuminate\Support\Facades\Auth::routes();
 
 Route::any('/wp-admin', function() {
     return response('I\'m a teapot',418);

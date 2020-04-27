@@ -2,11 +2,10 @@
 
 namespace App\Exceptions;
 
-use Exception;
+use Throwable;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Throwable;
 
 class Handler extends ExceptionHandler
 {
@@ -55,7 +54,11 @@ class Handler extends ExceptionHandler
         if ($exception instanceof NotFoundHttpException || $exception instanceof ModelNotFoundException) {
 
             if ($request->is('api/*'))
-                return response()->json(['message' => 'Not Found!'], 404);
+                return response()->json([
+                    'message' => 'The requested resource was not found',
+                    'timestamp' => \Carbon\Carbon::now(),
+                    'path' => $request->fullUrl()
+                ], 404);
 
         }
 
