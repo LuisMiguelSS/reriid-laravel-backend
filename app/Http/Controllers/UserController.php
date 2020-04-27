@@ -4,46 +4,82 @@ namespace App\Http\Controllers;
 
 use App\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+    /**
+     * Finds all the users in the DB
+     * 
+     * @return \App\User[] List of active users (not deleted)
+     * 
+     */
     public function index()
     {
-        return response()->json(
-            [
-                'count' => User::all()->count(),
-                'data' => User::all()
-            ]
-        );
-    }
-    public function indexdeleted()
-    {
-        return response()->json(
-            [
-                'count' => User::onlyTrashed()->get()->count(),
-                'data' => User::onlyTrashed()->get()
-            ]
-        );
+        $users = User::all();
+        $count = count($users);
+
+        if ($count == 0) {
+            return response()->noContent();
+        }
+
+        return response()->json([
+            'count' => $count,
+            'data' => $users
+        ]);
     }
 
+    /**
+     * Finds the soft deleted users in the DB
+     * 
+     * @return \App\User[] List of deleted users
+     * 
+     */
+    public function indexdeleted()
+    {
+        $users = User::onlyTrashed()->get();
+        $count = count($users);
+
+        if ($count == 0) {
+            return response()->noContent();
+        }
+
+        return response()->json([
+            'count' => $count,
+            'data' => $users
+        ]);
+    }
+
+    /**
+     * Gets the given user's info
+     * 
+     * @param $id The user's id
+     * 
+     * @return \App\User
+     * 
+     */
     public function show($id)
     {
         return response()->json(['data' => User::findOrFail($id)]);
     }
 
+    /**
+     * Updates the given user's data.
+     * 
+     * @param \Illuminate\Http\Request The request received from the API
+     * @param $id The user's id
+     * 
+     * @return \App\User The updated user if it succeeds
+     */
     public function update(Request $request, $id)
     {
-
         $user = User::findOrFail($id);
 
         if ($user != null) {
 
             // Get Attributes
-            
             if ($request->fullname) {
                 $user->full_name = $request->fullname;
             }
@@ -107,14 +143,23 @@ class UserController extends Controller
                 return response()->json([
                     'data' => $user
                 ], 200);
-            } catch (QueryException $qe) {
+
+            } catch (QueryException $queryException) {
                 return response()->json([
-                    'message' => 'The user could not be modified'
+                    'errors' => ['The user could not be modified']
                 ], 500);
             }
         }
     }
 
+    /**
+     * Soft deletes the user and its posts.
+     * 
+     * @param $id The user's id
+     * 
+     * @return \Illuminate\Http\Response
+     * 
+     */
     public function destroy($id)
     {
         try {
@@ -123,7 +168,7 @@ class UserController extends Controller
             $user = User::findOrFail($id);
             $user->delete();
 
-            // Delete image from disk
+            // Delete profile picture from disk
             if (File::exists(public_path($user->profile_pic))) {
                 File::delete(public_path($user->profile_pic));
 
@@ -135,25 +180,25 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'User deleted succesfully!'
             ], 200);
-        } catch (\Throwable $th) {
+
+        } catch (\Throwable $throwable) {
             return response()->json([
-                'message' => 'The user could not be deleted.' . $th
+                'errors' => ['The user could not be deleted.']
             ], 500);
         }
     }
 
     /**
-     * Saves the indicated file to the passed user's folder.
-     *
-     * @param  \App\User  $user
-     * @param  \Illuminate\Support\Facades\File  $file
-     * @return null/url
-     */
-    /**
-     * store_file
+     * Creates (if needed) a folder for the user
+     * and stores the given image in it.
+     * 
+     * @param \App\User $user
+     * @param $file
+     * 
      * @return url The url of the saved file or null if there was a problem.
+     * 
      */
-    public static function store_file($user, $file)
+    public static function store_file(\App\User $user, $file)
     {
         if ($user == null || !($user instanceof User) || $file == null) {
             return null;
