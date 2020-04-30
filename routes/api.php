@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Email Verification
-Auth::routes(['verify' => true]);
+Auth::routes(['verify' => true, 'register' => false]);
 
 // Unneeded API KEY routes
 // Email verification
