@@ -53,6 +53,24 @@ class UserController extends Controller
     }
 
     /**
+     * Restores the soft deleted record.
+     * 
+     * @param $id The user's id
+     * 
+     * @return \Illuminate\Http\Response
+     */
+    public function restore($id) {
+        $user = User::onlyTrashed()->where('id', $id)->first();
+
+        if ($user) {
+            $user->restore();
+            return response()->json(['data' => $user]);
+        }
+
+        return response()->noContent();
+    }
+
+    /**
      * Gets the given user's info
      * 
      * @param $id The user's id

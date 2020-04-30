@@ -2,10 +2,12 @@
 
 namespace App\Exceptions;
 
+use Exception;
 use Throwable;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -52,14 +54,20 @@ class Handler extends ExceptionHandler
     public function render($request, Throwable $exception)
     {
         if ($exception instanceof NotFoundHttpException || $exception instanceof ModelNotFoundException) {
-
-            if ($request->is('api/*'))
+            if ($request->is('api/*')) {
                 return response()->json([
                     'message' => 'The requested resource was not found',
                     'timestamp' => \Carbon\Carbon::now(),
                     'path' => $request->fullUrl()
                 ], 404);
+            }
 
+        } else if ($exception instanceof TooManyRequestsHttpException) {
+            return response()->json([
+                'message' => 'Too many requests',
+                'timestamp' => \Carbon\Carbon::now(),
+                'headers' => $exception->getHeaders()
+            ], 429);
         }
 
         return parent::render($request, $exception);

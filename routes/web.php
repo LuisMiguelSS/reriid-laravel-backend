@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Not Found
-Route::fallback(function(Illuminate\Http\Request $request){
+Route::fallback(function(Request $request){
     return response()->json([
         'message' => 'The given API route was not found',
         'method' => $request->method(),

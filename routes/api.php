@@ -16,50 +16,52 @@ use Illuminate\Support\Facades\Route;
 // Email Verification
 Auth::routes(['verify' => true]);
 
-// Force all routes to use a valid API key
+// Unneeded API KEY routes
+// Email verification
+Route::get('auth/email/verify/{id}/{hash}', 'Auth\VerificationController@verify')->name('verification.verify');
+
+// Routes which NEED an API key
 Route::group([
     'middleware' => 'apikey.validate'
 ], function() {
     
-    // Authentication based requests (api/auth/*)
+    // Authentication api/auth/
     Route::group([
-        'prefix' => 'auth'
+        'prefix' => 'auth',
     ], function () {
 
-        // Login/register (api/auth/)
         Route::post('register', 'Auth\AuthController@register')->name('register');
-        Route::post('login', 'Auth\AuthController@login')->name('login');
+        Route::post('email/resend', 'Auth\VerificationController@resend')->name('verification.resend');
 
-        // Headers authentication (api/auth/)
+        // Routes which need previous email verification
         Route::group([
-        'middleware' => 'auth:api'
+            'middleware' => 'verified'
         ], function() {
-            Route::get('user', 'Auth\AuthController@user')->name('auth.currentuser');
-            Route::post('logout', 'Auth\AuthController@logout')->name('auth.logout');
+
+            Route::post('login', 'Auth\AuthController@login')->name('login');
+
+            // Headers Auth
+            Route::group([
+            'middleware' => 'auth:api'
+            ], function() {
+                Route::get('user', 'Auth\AuthController@user')->name('auth.currentuser');
+                Route::post('logout', 'Auth\AuthController@logout')->name('auth.logout');
+            });
         });
 
-        // Email (api/auth/email)
-        Route::group([
-            'prefix' => 'email'
-        ], function() {
-            Route::get('resend', 'Auth\VerificationController@resend')->name('verification.resend');
-            Route::get('verify/{id}/{hash}', 'Auth\VerificationController@verify')->name('verification.verify');
-        });
-        
     });
 
-    // User requests (api/users/)
+    // USERS api/users/
     Route::group([
         'prefix' => 'users',
     ], function () {
         Route::get('', 'UserController@index')->name('users');
         Route::get('{id}', 'UserController@show')->name('user');
-        // The edit NEEDS to be POST instead of PUT due to a laravel bug
-        Route::post('{id}', 'UserController@update')->name('user.edit');
+        Route::post('{id}', 'UserController@update')->name('user.edit'); // The edit NEEDS to be POST instead of PUT due to a laravel bug
         Route::delete('{id}', 'UserController@destroy')->name('user.delete');
     });
 
-    // Post requests (api/posts/)
+    // POSTS api/posts/
     Route::group([
         'prefix' => 'posts',
     ], function () {
@@ -67,12 +69,11 @@ Route::group([
         Route::post('create', 'PostController@store')->name('posts.create');
         Route::get('user/{id}', 'PostController@showuser')->name('userposts');
         Route::get('{id}', 'PostController@show')->name('post');
-        // The edit NEEDS to be POST instead of PUT due to a laravel bug
-        Route::post('{id}', 'PostController@update')->name('post.edit');
+        Route::post('{id}', 'PostController@update')->name('post.edit'); // The edit NEEDS to be POST instead of PUT due to a laravel bug
         Route::delete('{id}', 'PostController@destroy')->name('post.delete');
     });
 
-    // Deleted Data (api/deleted)
+    // Deleted Data api/deleted
     Route::group(['prefix' => 'deleted'], function () {
 
         // Users
@@ -84,6 +85,13 @@ Route::group([
         // Posts
         Route::group(['prefix' => 'posts'], function () {
             Route::get('', 'PostController@indexdeleted')->name('deleted.posts');
+            Route::get('{id}', 'PostController@indexdeleted')->name('deleted.post');
         });
+    });
+
+    // Restore Data (api/restore)
+    Route::group(['prefix' => 'restore'], function () {
+        Route::post('user/{id}', 'UserController@restore')->name('restore.user');
+        Route::get('post/{id}', 'PostController@restore')->name('restore.post');
     });
 });

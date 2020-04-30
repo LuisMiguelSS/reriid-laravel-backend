@@ -33,7 +33,7 @@ class AuthController extends Controller {
             // Check if authentication fails
             if(!Auth::attempt([$loginType => $login, 'password' => $password])) {
                 return response()->json([
-                    'message' => 'Incorrect credentials'
+                    'errors' => ['Incorrect credentials']
                 ], 401);
             }
     
@@ -54,9 +54,9 @@ class AuthController extends Controller {
                 )->toDateTimeString()
             ]);
 
-        } catch (\Throwable $th) {
+        } catch (\Throwable $throwable) {
             return response()->json([
-                'message' => 'We couldn\'t log you in' .$th
+                'errors' => ['We couldn\'t log you in']
             ], 500);
         }
 
@@ -109,9 +109,9 @@ class AuthController extends Controller {
                     // Save image & update user's profile picture
                     $user->profile_pic = UserController::store_file($user,$request->file('photo'));
 
-                } catch(\Throwable $exc) {
+                } catch(\Throwable $throwable) {
                     return response()->json([
-                        'error' => 'We could not save the image'
+                        'errors' => ['We could not save the image']
                     ], 500);
                 }
             }
@@ -126,7 +126,7 @@ class AuthController extends Controller {
             
         } catch (\Throwable $th) {
             return response()->json([
-                'error' => 'The user could not be added.'
+                'errors' => ['The user could not be added.']
             ], 500);
         }
 
