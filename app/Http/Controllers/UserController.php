@@ -18,17 +18,13 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::all();
-        $count = count($users);
+        $pagination_result = User::paginate();
 
-        if ($count == 0) {
+        if ($pagination_result->total() == 0) {
             return response()->noContent();
         }
 
-        return response()->json([
-            'count' => $count,
-            'data' => $users
-        ]);
+        return response()->json($pagination_result);
     }
 
     /**
@@ -39,17 +35,13 @@ class UserController extends Controller
      */
     public function indexdeleted()
     {
-        $users = User::onlyTrashed()->get();
-        $count = count($users);
+        $pagination_result = User::onlyTrashed()->paginate();
 
-        if ($count == 0) {
+        if ($pagination_result->total() == 0) {
             return response()->noContent();
         }
 
-        return response()->json([
-            'count' => $count,
-            'data' => $users
-        ]);
+        return response()->json($pagination_result);
     }
 
     /**
@@ -93,7 +85,7 @@ class UserController extends Controller
      */
     public function showdeleted($id)
     {
-        return response()->json(['data' => User::onlyTrashed()->where('id', $id)]);
+        return response()->json(['data' => User::onlyTrashed()->where('id', $id)->first()]);
     }
 
     /**
