@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\User;
+use \Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
     /**
-     * Finds all the users in the DB
+     * Returns the available users in the DB
      * 
      * @return \Illuminate\Http\Response List of active users (not deleted)
      * 
@@ -145,16 +147,16 @@ class UserController extends Controller
                     if ($validator->fails()) {
                         return response()->json([
                             'errors' => $validator->errors()
-                        ], 422);
+                        ], Response::HTTP_UNPROCESSABLE_ENTITY);
                     }
 
                     // Save image and update user's profile picture
                     $user->profile_pic = $this->store_file($user, $request->file('photo'));
                     
-                } catch (\Throwable $exc) {
+                } catch (Throwable $throwable) {
                     return response()->json([
-                        'message' => 'The image could not be saved'
-                    ], 500);
+                        'errors' => ['The image could not be saved']
+                    ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
             }
 
@@ -165,12 +167,12 @@ class UserController extends Controller
 
                 return response()->json([
                     'data' => $user
-                ], 200);
+                ], Response::HTTP_OK);
 
             } catch (QueryException $queryException) {
                 return response()->json([
                     'errors' => ['The user could not be modified']
-                ], 500);
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
             }
         }
     }
@@ -179,8 +181,7 @@ class UserController extends Controller
      * Soft deletes the user and its posts.
      * 
      * @param $id The user's id
-     * 
-     * @return \Illuminate\Http\Response
+     * @return Response
      * 
      */
     public function destroy($id)
@@ -202,12 +203,12 @@ class UserController extends Controller
 
             return response()->json([
                 'message' => 'User deleted succesfully!'
-            ], 200);
+            ], Response::HTTP_OK);
 
         } catch (\Throwable $throwable) {
             return response()->json([
                 'errors' => ['The user could not be deleted.']
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -215,8 +216,8 @@ class UserController extends Controller
      * Creates (if needed) a folder for the user
      * and stores the given image in it.
      * 
-     * @param \App\User $user
-     * @param $file
+     * @param User $user
+     * @param string $file
      * 
      * @return url The url of the saved file or null if there was a problem.
      * 
