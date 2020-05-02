@@ -1,6 +1,8 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,14 +17,14 @@ Route::fallback(function(Request $request){
     return response()->json([
         'message' => 'The given API route was not found',
         'method' => $request->method(),
-        'timestamp' => \Carbon\Carbon::now(),
+        'timestamp' => Carbon::now(),
         'user_agent' => $request->userAgent(),
         'path' => $request->fullUrl()
     ], 404);
 })->name('notfound');
 
-\Illuminate\Support\Facades\Auth::routes();
+Auth::routes();
 
 Route::any('/wp-admin', function() {
-    return response('I\'m a teapot',418);
+    return response('I\'m a teapot', 418);
 });
