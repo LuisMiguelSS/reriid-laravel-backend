@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\User;
 use \Throwable;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\File\FileController;
 
 class UserController extends Controller
 {
@@ -151,11 +152,11 @@ class UserController extends Controller
                     }
 
                     // Save image and update user's profile picture
-                    $user->profile_pic = $this->store_file($user, $request->file('photo'));
+                    $user->profile_pic = FileController::store_profilepic($user, $request->file('photo'));
                     
                 } catch (Throwable $throwable) {
                     return response()->json([
-                        'errors' => ['The image could not be saved']
+                        'errors' => ['The image could not be saved' . $throwable]
                     ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
             }
@@ -210,41 +211,5 @@ class UserController extends Controller
                 'errors' => ['The user could not be deleted.']
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    /**
-     * Creates (if needed) a folder for the user
-     * and stores the given image in it.
-     * 
-     * @param User $user
-     * @param string $file
-     * 
-     * @return url The url of the saved file or null if there was a problem.
-     * 
-     */
-    public static function store_file(\App\User $user, $file)
-    {
-        if ($user == null || !($user instanceof User) || $file == null) {
-            return null;
-        }
-
-        $user_storage_folder = public_path() . '/uploads/user/' . $user->id . '/';
-
-        // Check if user folder exists
-        if (!File::exists($user_storage_folder)) {
-            File::makeDirectory($user_storage_folder, 0755, true);
-        }
-
-        // Store (and replace if necessary) file
-        $filename = $user->id . '-profile-' . date('d_M_Y') . '.' . $file->getClientOriginalExtension();
-
-        if (File::exists($user_storage_folder . $filename)) {
-            File::delete($user_storage_folder . $filename);
-        }
-
-        // Store file
-        $file->move($user_storage_folder, $filename);
-
-        return url('uploads/user/' . $user->id . '/' . $filename);
     }
 }

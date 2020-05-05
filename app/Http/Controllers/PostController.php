@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Post;
-use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\File\FileController;
 
 class PostController extends Controller
 {
@@ -177,7 +177,7 @@ class PostController extends Controller
 
                     // Save images and update the post pictures
                     foreach ($request->file('images') as $photo) {
-                        array_push($images, $this->store_file($post, $photo));
+                        array_push($images, FileController::store_postimage($post, $photo));
                     }
 
                     $post->images = stripslashes(json_encode($images, JSON_UNESCAPED_SLASHES));
@@ -273,7 +273,7 @@ class PostController extends Controller
 
                         // Save images and update the post pictures
                         foreach ($request->file('images') as $photo) {
-                            array_push($images, $this->store_file($post, $photo));
+                            array_push($images, FileController::store_postimage($post, $photo));
                         }
 
                         $post->images = stripslashes(json_encode($images, JSON_UNESCAPED_SLASHES));
@@ -350,61 +350,4 @@ class PostController extends Controller
         }
     }
 
-    /**
-     * Saves the indicated file to the passed Post's folder.
-     *
-     * @param  \App\Post  $post
-     * @param  \Illuminate\Support\Facades\File  $file
-     * @return url
-     */
-    /**
-     * store_file
-     * @return url 
-     */
-    public function store_file($post, $file)
-    {
-        if ($post == null || !($post instanceof Post) || $file == null) {
-            return null;
-        }
-
-        try {
-            $post_storage_folder = public_path() . '/uploads/user/'. $post->user_id . '\/post/' . $post->id . '/';
-
-            // Check if Post folder exists
-            if (!File::exists($post_storage_folder)) {
-                File::makeDirectory($post_storage_folder, 0755, true);
-            }
-
-            // Store (and replace if necessary) file
-            $filename = self::create_file_number($post_storage_folder) . '-' . date('d_M_Y') . '.' . $file->getClientOriginalExtension();
-
-            if (File::exists($post_storage_folder . $filename)) {
-                File::delete($post_storage_folder . $filename);
-            }
-
-            // Store file
-            $file->move($post_storage_folder, $filename);
-
-            return url('uploads/user/'. $post->user_id . '\/post/' . $post->id . '/' . $filename);
-
-        } catch(Throwable $throwable) {
-            return null;
-        }
-    }
-
-    /**
-     * Creates a number depending on
-     * the number of files in the folder.
-     * 
-     * @param string $folder A folder from where count the files.
-     * @return int The generated number.
-     * 
-     */
-    public static function create_file_number($folder) {
-        if (File::exists($folder)) {
-            return count(glob($folder.'*'));
-        }
-
-        return 0;
-    }
 }
