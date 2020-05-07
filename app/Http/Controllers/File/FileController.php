@@ -55,7 +55,7 @@ class FileController extends Controller
      * @return url
      *
      */
-    public function store_postimage(Post $post, $file)
+    public static function store_postimage(Post $post, $file)
     {
         if ($post == null || $file == null) {
             return null;
