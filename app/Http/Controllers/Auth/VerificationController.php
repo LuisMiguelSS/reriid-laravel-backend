@@ -28,7 +28,7 @@ class VerificationController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected $redirectTo = '';
 
     /**
      * Create a new controller instance.
@@ -74,7 +74,7 @@ class VerificationController extends Controller
         if ($request->route('id') != $request->user()->getKey()) {
             throw new AuthorizationException();
         }
-
+        
         if ($request->user()->hasVerifiedEmail()) {
             return response(['message'=>'Email already verified']);
         }

@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\File\FileController;
 
 class AuthController extends Controller {
 
@@ -34,10 +35,18 @@ class AuthController extends Controller {
             if(!Auth::attempt([$loginType => $login, 'password' => $password])) {
                 return response()->json([
                     'errors' => ['Incorrect credentials']
-                ], 401);
+                ], Response::HTTP_UNAUTHORIZED);
             }
     
             $user = $request->user();
+
+            // Check if email has been verified
+            if (!$user->hasVerifiedEmail()) {
+                return response()->json([
+                    'errors' => ['Email not verified']
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
             $tokenResult = $user->createToken('Personal Access Token');
             $token = $tokenResult->token;
     
@@ -57,7 +66,7 @@ class AuthController extends Controller {
         } catch (\Throwable $throwable) {
             return response()->json([
                 'errors' => ['We couldn\'t log you in']
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -79,7 +88,7 @@ class AuthController extends Controller {
             if ($validator->fails())
                 return response()->json([
                     'errors' => $validator->errors()
-                ], 422);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             
             // Continue creating the user
             $user = new User;
@@ -104,15 +113,15 @@ class AuthController extends Controller {
                     if ($validator->fails())
                         return response()->json([
                             'errors' => $validator->errors()
-                        ], 422);
+                        ], Response::HTTP_UNPROCESSABLE_ENTITY);
 
                     // Save image & update user's profile picture
-                    $user->profile_pic = UserController::store_file($user,$request->file('photo'));
+                    $user->profile_pic = FileController::store_profilepic($user,$request->file('photo'));
 
                 } catch(\Throwable $throwable) {
                     return response()->json([
                         'errors' => ['We could not save the image']
-                    ], 500);
+                    ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
             }
 
@@ -122,12 +131,12 @@ class AuthController extends Controller {
                 'message' => 'User created succesfully!',
                 'data' => $user,
                 'access_token' => $accessToken
-            ], 201);
+            ], Response::HTTP_CREATED);
             
         } catch (\Throwable $th) {
             return response()->json([
                 'errors' => ['The user could not be added.']
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -146,7 +155,7 @@ class AuthController extends Controller {
         } catch (\Throwable $th) {
             return response()->json([
                 'error' => 'We couldn\'t log you off'
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -154,7 +163,7 @@ class AuthController extends Controller {
     /**
      * Get the authenticated User
      *
-     * @return [json] user object
+     * @return Response user object
      */
     public function user(Request $request)
     {

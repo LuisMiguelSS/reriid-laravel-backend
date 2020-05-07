@@ -2,12 +2,15 @@
 
 namespace App\Exceptions;
 
-use Exception;
 use Throwable;
+use Carbon\Carbon;
+use Illuminate\Http\Response;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -32,10 +35,10 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param  \Throwable  $exception
+     * @param  Throwable  $exception
      * @return void
      *
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function report(Throwable $exception)
     {
@@ -45,31 +48,39 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Throwable  $exception
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @param  Request  $request
+     * @param  Throwable  $exception
+     * 
+     * @return Response
+     * @throws Throwable
      *
-     * @throws \Throwable
      */
     public function render($request, Throwable $exception)
     {
-        if ($exception instanceof NotFoundHttpException || $exception instanceof ModelNotFoundException) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'The requested resource was not found',
-                    'timestamp' => \Carbon\Carbon::now(),
-                    'path' => $request->fullUrl()
-                ], 404);
-            }
+        if ($exception instanceof NotFoundHttpException || $exception instanceof ModelNotFoundException | $exception instanceof MethodNotAllowedHttpException) {
+            return response()->json([
+                'message' => 'The requested resource was not found',
+                'timestamp' => Carbon::now(),
+                'path' => $request->fullUrl()
+            ], Response::HTTP_NOT_FOUND);
 
         } else if ($exception instanceof TooManyRequestsHttpException) {
             return response()->json([
                 'message' => 'Too many requests',
-                'timestamp' => \Carbon\Carbon::now(),
+                'timestamp' => Carbon::now(),
                 'headers' => $exception->getHeaders()
-            ], 429);
+            ], Response::HTTP_TOO_MANY_REQUESTS);
         }
 
         return parent::render($request, $exception);
+    }
+
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        return response()->json([
+            'errors' => [
+                'Unauthenticated'
+                ]
+        ], Response::HTTP_UNAUTHORIZED);
     }
 }
