@@ -95,7 +95,7 @@ class FileController extends Controller
      * @return int The generated number.
      * 
      */
-    private function create_file_number($folder) {
+    private static function create_file_number($folder) {
         if (!File::exists($folder)) {
             return 0;
         }
