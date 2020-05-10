@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Post;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
@@ -60,6 +61,98 @@ class PostController extends Controller
         }
 
         return response()->json($pagination_result);
+    }
+
+    /**
+     * Returns a paginated result for nearby posts.
+     * 
+     * @param Request In case the user didn't especify his location or chosen one,
+     * it will be picked from their IP address.
+     * 
+     * @return array(Post)
+     * 
+     */
+    public function nearby(Request $request) {
+        $using_km = true;
+
+        // Measurement unit
+        if ($request->unit) {
+            switch (strtoupper($request->unit)) {
+                case 'MILES':
+                case 'M':
+                case 'MI':
+                    $using_km = false;
+
+                default:
+                    break;
+            }
+        }
+
+        // Distance
+        $distance = 25;
+        if($request->distance && is_int($request->distance)) {
+            $distance = ($using_km)? $request->distance : $request->distance*1.60934;
+        }
+
+        $user = $request->user();
+        
+        try {
+
+            $posts = DB::select(
+                'SELECT 
+                        p.id as post_id,
+                        p.book_title as post_title,
+                        p.images as post_images,
+                        u.username,
+                        u.profile_pic as user_profile_pic,
+                        (st_distance_sphere(
+                            point(:long_from, :lat_from),
+                            point(u.longitude, u.latitude)
+                        )/1000) as distance
+                    FROM users as u, posts as p
+                    WHERE u.id = p.user_id
+                        and u.deleted_at IS NULL
+                        and u.id <> ' . $user->id . '
+                        and u.latitude IS NOT NULL
+                        and u.longitude IS NOT NULL
+                    HAVING distance <= ' . $distance
+            , [
+                'long_from' => $user->longitude,
+                'lat_from' => $user->latitude
+            ]);
+
+            $number_of_results = count($posts);
+    
+            if ($number_of_results == 0) {
+                return response()->noContent();
+            }
+
+            // Check for measurement unit
+            if (!$using_km) {
+                foreach ($posts as $post) {
+                    $post->distance *= 0.62137;
+                }
+
+            } else {
+                // Clean "0.00000..." values to "0"
+                foreach ($posts as $post) {
+                    if ($post->distance == 0) {
+                        $post->distance = 0;
+                    }
+                }
+            }
+
+            return response()->json([
+                'count' => $number_of_results,
+                'data' => $posts
+            ]);
+
+        } catch(QueryException $queryException) {
+            return response()->json([
+                'errors' => ['We couldn\'t process the search']
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+        
     }
 
     /**
