@@ -65,6 +65,8 @@ Route::group([
         ], function() {
             Route::get('user', 'Auth\AuthController@user')->name('auth.currentuser');
             Route::post('logout', 'Auth\AuthController@logout')->name('auth.logout');
+
+            Route::get('posts/nearby', 'PostController@nearby')->name('posts.nearby');
         });
 
     });
@@ -84,7 +86,6 @@ Route::group([
         'prefix' => 'posts',
     ], function () {
         Route::get('', 'PostController@index')->name('posts');
-        Route::get('nearby', 'PostController@nearby')->name('posts.nearby');
         Route::post('create', 'PostController@store')->name('posts.create');
         Route::get('user/{id}', 'PostController@showuser')->name('userposts');
         Route::get('{id}', 'PostController@show')->name('post');
