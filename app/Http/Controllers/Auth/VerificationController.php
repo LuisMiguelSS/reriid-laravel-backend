@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Verified;
 use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\VerifiesEmails;
 use Illuminate\Auth\Access\AuthorizationException;
 
@@ -59,6 +59,24 @@ class VerificationController extends Controller
         return response(['message' => 'Verification email sent']);
     }
 
+    /**
+     * Resend the email verification email from admin.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function adminresend(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        // Add user as Resolver for the Auth
+        $request->merge(['user' => $user ]);
+        $request->setUserResolver(function () use ($user) {
+            return $user;
+        });
+
+        return $this->resend($request);
+    }
 
     /**
      * Establish the user's email as verified.

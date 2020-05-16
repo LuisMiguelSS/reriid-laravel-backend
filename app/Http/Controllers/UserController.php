@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\File\FileController;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserController extends Controller
 {
@@ -88,7 +89,7 @@ class UserController extends Controller
      */
     public function showdeleted($id)
     {
-        return response()->json(['data' => User::onlyTrashed()->where('id', $id)->first()]);
+        return response()->json(['data' => User::onlyTrashed()->where('id', $id)->firstOrFail()]);
     }
 
     /**
@@ -102,42 +103,51 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        $request_empty = true;
 
         if ($user != null) {
 
             // Get Attributes
             if ($request->fullname) {
                 $user->full_name = $request->fullname;
+                $request_empty = false;
             }
 
             if ($request->email) {
                 $user->email = $request->email;
+                $request_empty = false;
             }
 
             if ($request->birthdate) {
                 $user->date_of_birth = $request->birthdate;
+                $request_empty = false;
             }
 
             // LOCATION
             // Latitude
             if ($request->latitude) {
                 $user->latitude = $request->latitude;
+                $request_empty = false;
             }
 
             if ($request->lat) {
                 $user->latitude = $request->lat;
+                $request_empty = false;
             }
 
             // Longitude
             if ($request->longitude) {
                 $user->longitude = $request->longitude;
+                $request_empty = false;
             }
 
             if ($request->long) {
                 $user->longitude = $request->long;
+                $request_empty = false;
             }
 
             if ($request->hasFile('photo')) {
+                $request_empty = false;
                 try {
 
                     // Check the image
@@ -166,6 +176,11 @@ class UserController extends Controller
 
                 $user->save();
 
+                if ($request_empty) {
+                    return response()->json([
+                        'errors' => 'No content was provided'
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
                 return response()->json([
                     'data' => $user
                 ], Response::HTTP_OK);
@@ -207,6 +222,44 @@ class UserController extends Controller
             ], Response::HTTP_OK);
 
         } catch (\Throwable $throwable) {
+            return response()->json([
+                'errors' => ['The user could not be deleted.']
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    /**
+     * Hard deletes the user and its posts.
+     * 
+     * @param $id The user's id
+     * @return Response
+     * 
+     */
+    public function harddestroy($id)
+    {
+        try {
+
+            // Hard delete user
+            $user = User::findOrFail($id);
+            $user->forceDelete();
+
+            // Delete profile picture from disk
+            if (File::exists(public_path('uploads/user/' . $id))) {
+                File::deleteDirectory(public_path('uploads/user/' . $id));
+            }
+
+            return response()->json([
+                'message' => 'User deleted succesfully!'
+            ], Response::HTTP_OK);
+
+        } catch (\Throwable $throwable) {
+
+            if ($throwable instanceof ModelNotFoundException) {
+                return response()->json([
+                    'errors' => ['The user could not be found.']
+                ], Response::HTTP_NOT_FOUND);
+            }
+
             return response()->json([
                 'errors' => ['The user could not be deleted.']
             ], Response::HTTP_INTERNAL_SERVER_ERROR);

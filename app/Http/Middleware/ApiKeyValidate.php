@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use App\ApiKey;
+use Illuminate\Http\Response;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ApiKeyValidate
@@ -22,7 +23,7 @@ class ApiKeyValidate
         if (!$request->has('api_key')) {
             return response()->json([
                 'errors' => ['Unauthorized']
-            ], 401);
+            ], Response::HTTP_UNAUTHORIZED);
 
         }
         else {
@@ -34,7 +35,7 @@ class ApiKeyValidate
             } catch (ModelNotFoundException $mnfe) {
                 return response()->json([
                     'errors' => ['Invalid key']
-                ], 401);
+                ], Response::HTTP_UNAUTHORIZED);
             }
         }
 

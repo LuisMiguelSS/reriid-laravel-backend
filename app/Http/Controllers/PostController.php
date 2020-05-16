@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Post;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\File\FileController;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class PostController extends Controller
 {
@@ -62,9 +64,44 @@ class PostController extends Controller
 
         return response()->json($pagination_result);
     }
+    
+    /**
+     * Gets the given deleted post's info
+     * 
+     * @param $id The post's id
+     * 
+     * @return \Illuminate\Http\Response
+     * 
+     */
+    public function showdeleted($id)
+    {
+        return response()->json(['data' => Post::onlyTrashed()->where('id', $id)->firstOrFail()]);
+    }
 
     /**
-     * Returns a paginated result for nearby posts.
+     * Returns the nearby posts.
+     * 
+     * @param Request
+     * @param int The user ID
+     * 
+     * 
+     * @return array(Post)
+     * 
+     */
+    public function nearbyid(Request $request, $id) {
+        $user = User::findOrFail($id);
+
+        // Add user as Resolver for the Auth
+        $request->merge(['user' => $user ]);
+        $request->setUserResolver(function () use ($user) {
+            return $user;
+        });
+
+        return $this->nearby($request);
+    }
+
+    /**
+     * Returns the nearby posts.
      * 
      * @param Request In case the user didn't especify his location or chosen one,
      * it will be picked from their IP address.
@@ -82,6 +119,7 @@ class PostController extends Controller
                 case 'M':
                 case 'MI':
                     $using_km = false;
+                break;
 
                 default:
                     break;
@@ -112,13 +150,15 @@ class PostController extends Controller
                     FROM users as u, posts as p
                     WHERE u.id = p.user_id
                         and u.deleted_at IS NULL
-                        and u.id <> ' . $user->id . '
+                        and u.id <> :current_user_id
                         and u.latitude IS NOT NULL
                         and u.longitude IS NOT NULL
-                    HAVING distance <= ' . $distance
+                    HAVING distance <= :max_distance'
             , [
                 'long_from' => $user->longitude,
-                'lat_from' => $user->latitude
+                'lat_from' => $user->latitude,
+                'current_user_id' => $user->id,
+                'max_distance' => $distance
             ]);
 
             $number_of_results = count($posts);
@@ -211,7 +251,7 @@ class PostController extends Controller
             'book_isbn' => 'numeric',
             'book_author' => 'string'
         ]);
-         
+
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors()
@@ -419,28 +459,102 @@ class PostController extends Controller
 
             // Soft delete Post
             $post = Post::findOrFail($id);
-            $post->delete();
 
-            // Delete images from disk
-            foreach (json_decode($post->images) as $image) {
-                if (File::exists(public_path($image))) {
-                    File::delete(public_path($image));
-    
-                    // Update Post entry
+            // Delete post folder
+            if ($post->images != null || json_decode($post->images)) {
+                if (File::deleteDirectory(public_path('uploads/user/' . $post->user_id . '/post\/' . $id))) {
                     $post->images = null;
                     $post->save();
+                } else {
+                    return response()->json([
+                        'errors' => ['The post images could not be deleted']
+                    ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
             }
+
+            $post->delete();
 
             return response()->json([
                 'message' => 'Post deleted succesfully!'
             ], Response::HTTP_OK);
 
         } catch (\Throwable $th) {
+
+            if ($th instanceof ModelNotFoundException) {
+                return response()->json([
+                    'errors' => ['The post could not be found.']
+                ], Response::HTTP_NOT_FOUND);
+            }
+
             return response()->json([
-                'message' => 'The post could not be deleted.'
+                'errors' => ['The post could not be deleted.' . $th]
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    
+    /**
+     * Hard-deletes the post
+     * 
+     * @param int $id The post ID.
+     * @return Response An HTTP Response.
+     * 
+     */
+    public function harddestroy($id)
+    {
+        try {
+
+            // Hard delete Post
+            $post = Post::withTrashed()->where('id', $id)->firstOrFail();
+
+            // Delete post folder
+            if ($post->images != null || json_decode($post->images)) {
+                File::deleteDirectory(public_path('uploads/user/' . $post->user_id . '/post\/' . $id));
+                
+                // Remove the images from the database
+                // wether it succeeded deleting them from the filesystem or not.
+                $post->images = null;
+                $post->save();
+            }
+            
+            $post->forceDelete();
+
+            return response()->json([
+                'message' => 'Post deleted succesfully!'
+            ], Response::HTTP_OK);
+
+        } catch (\Throwable $th) {
+
+            if ($th instanceof ModelNotFoundException) {
+                return response()->json([
+                    'errors' => ['The post could not be found.']
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return response()->json([
+                'errors' => ['The post could not be deleted.' . $th]
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Restores the soft deleted record.
+     * 
+     * @param $id The post's id
+     * 
+     * @return \Illuminate\Http\Response
+     */
+    public function restore($id) {
+        $post = Post::onlyTrashed()->where('id', $id)->first();
+
+        if ($post) {
+            $post->restore();
+            return response()->json(['data' => $post]);
+        }
+
+        return response()->json([
+            'errors' => ['There is no archived post with such ID.']
+        ], Response::HTTP_NOT_FOUND);
     }
 
 }

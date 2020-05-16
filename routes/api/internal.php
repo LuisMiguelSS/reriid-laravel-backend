@@ -12,42 +12,27 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | These routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group.
-|
-| Order of routes:
-|
-| 1. Routes which don't need an API key to be used.
-| 2. Routes which need an API key.
-|   2.1. Auth-Related routes
-|     2.1.1. Routes which need email verification to work.
-|   2.2. User related routes
-|   2.3. Post related routes
-|   2.4. Deleted data routes
-|   2.5. Restoring data routes
-| 3. Not Found
-| 4. Easter Egg
+| is assigned the "api" middleware group and under the 'api.xxx' subdomain.
 |
 */
 
 // Email Verification
 Auth::routes(['verify' => true, 'register' => false]);
-
-/**
- * 1. Routes which don't need an API key to be used.
- * 
- */
-// Email verification
 Route::get('auth/email/verify/{id}/{hash}', 'Auth\VerificationController@verify')->name('verification.verify');
 
-/**
- * 2. Routes which need an API key.
- * 
- */
 Route::group([
     'middleware' => 'apikey.validate'
 ], function() {
-    
-    // 2.1. Auth-Related routes
+
+    // Users
+    Route::group(['prefix' => 'users'], function () {
+        Route::get('', 'UserController@index')->name('users');
+        Route::get('{id}', 'UserController@show')->name('user');
+        Route::post('{id}', 'UserController@update')->name('user.edit'); // The edit NEEDS to be POST instead of PUT due to a laravel bug
+        Route::delete('{id}', 'UserController@destroy')->name('user.delete');
+        Route::post('{id}/restore', 'UserController@restore')->name('user.restore');
+    });
+
     Route::group([
         'prefix' => 'auth',
     ], function () {
@@ -71,16 +56,6 @@ Route::group([
 
     });
 
-    // 2.2. User related routes
-    Route::group([
-        'prefix' => 'users',
-    ], function () {
-        Route::get('', 'UserController@index')->name('users');
-        Route::get('{id}', 'UserController@show')->name('user');
-        Route::post('{id}', 'UserController@update')->name('user.edit'); // The edit NEEDS to be POST instead of PUT due to a laravel bug
-        Route::delete('{id}', 'UserController@destroy')->name('user.delete');
-    });
-
     // 2.3. Post related routes
     Route::group([
         'prefix' => 'posts',
@@ -91,6 +66,7 @@ Route::group([
         Route::get('{id}', 'PostController@show')->name('post');
         Route::post('{id}', 'PostController@update')->name('post.edit'); // The edit NEEDS to be POST instead of PUT due to a laravel bug
         Route::delete('{id}', 'PostController@destroy')->name('post.delete');
+        Route::post('{id}/restore', 'PostController@restore')->name('post.restore');
     });
 
     // 2.4. Deleted data routes
@@ -109,11 +85,6 @@ Route::group([
         });
     });
 
-    // 2.5. Restoring data routes
-    Route::group(['prefix' => 'restore'], function () {
-        Route::post('user/{id}', 'UserController@restore')->name('restore.user');
-        Route::get('post/{id}', 'PostController@restore')->name('restore.post');
-    });
 });
 
 /**

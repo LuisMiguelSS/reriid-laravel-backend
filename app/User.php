@@ -54,7 +54,15 @@ class User extends Authenticatable implements MustVerifyEmail
         parent::boot();
 
         static::deleting(function ($user) {
-            $user->posts()->delete();
+
+            if ($user->forceDeleting) {
+                // Hard Delete
+                $user->posts()->forceDelete();
+            } else {
+                // Soft Delete
+                $user->posts()->delete();
+            }
+
         });
 
         static::restoring(function ($user) {

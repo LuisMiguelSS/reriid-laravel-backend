@@ -7,6 +7,8 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvi
 
 class RouteServiceProvider extends ServiceProvider
 {
+    const API_ROUTES_FOLDER = 'routes/api/';
+
     /**
      * This namespace is applied to your controller routes.
      *
@@ -45,8 +47,31 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapApiRoutes()
     {
-        Route::middleware('api')
-             ->namespace($this->namespace)
-             ->group(base_path('routes/api/api.php'));
+        Route::group([
+            'middleware' => 'api',
+            'namespace' => $this->namespace
+        ], function () {
+            
+            // Public API
+            Route::domain('api.localhost')
+                 ->prefix('partner')
+                 ->group(
+                    base_path(self::API_ROUTES_FOLDER . 'partner.php')
+                 );
+    
+            // Internal API
+            Route::domain('api.localhost')
+                 ->group(
+                    base_path(self::API_ROUTES_FOLDER . 'internal.php')
+                 );
+
+            // Admin API
+            Route::domain('admin.localhost')
+                 ->middleware('apikey.validate')
+                 ->group(
+                     base_path(self::API_ROUTES_FOLDER . 'admin.php')
+                 );
+        });
+
     }
 }
