@@ -57,22 +57,37 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        if ($exception instanceof NotFoundHttpException || $exception instanceof ModelNotFoundException | $exception instanceof MethodNotAllowedHttpException) {
-            return response()->json([
-                'message' => 'The requested resource was not found',
-                'timestamp' => Carbon::now(),
-                'path' => $request->fullUrl()
-            ], Response::HTTP_NOT_FOUND);
+        $message = 'An unkown error ocurred';
+        $error_number = Response::HTTP_INTERNAL_SERVER_ERROR;
 
-        } else if ($exception instanceof TooManyRequestsHttpException) {
-            return response()->json([
-                'message' => 'Too many requests',
-                'timestamp' => Carbon::now(),
-                'headers' => $exception->getHeaders()
-            ], Response::HTTP_TOO_MANY_REQUESTS);
+        switch(get_class($exception)) {
+            case NotFoundHttpException::class:
+                $message = 'The given route was not found';
+                $error_number = Response::HTTP_NOT_FOUND;
+            break;
+            case ModelNotFoundException::class:
+                $message = 'The given object does not exist.';
+                $error_number = Response::HTTP_NOT_FOUND;
+            break;
+            case MethodNotAllowedHttpException::class:
+                $message = 'Wrong method {' . $request->method() . '}';
+                $error_number = Response::HTTP_METHOD_NOT_ALLOWED;
+            break;
+            case TooManyRequestsHttpException::class:
+                $message = 'Too many requests';
+                $error_number = Response::HTTP_TOO_MANY_REQUESTS;
+            break;
         }
 
-        return parent::render($request, $exception);
+        return response()->json([
+            'message' => $message,
+            'is_secure' => $request->secure(),
+            'user_agent' => $request->userAgent(),
+            'timestamp' => Carbon::now(),
+            'path' => $request->fullUrl(),
+            'user_agent' => $request->userAgent(),
+        ], $error_number);
+
     }
 
     protected function unauthenticated($request, AuthenticationException $exception)
