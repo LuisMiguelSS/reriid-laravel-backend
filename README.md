@@ -1,17 +1,11 @@
-<style>
-    img { vertical-align: middle; }
-</style>
-
 <p align="center">
-    <img alt="Laravel"
-        src="https://res.cloudinary.com/dtfbvvkyp/image/upload/v1566331377/laravel-logolockup-cmyk-red.svg"
-        width="400"
-        />
-    <img alt="Node.js"
-        src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1200px-Npm-logo.svg.png"
-        width="180"
+    <img alt="Reriid"
+        src="public/static/logo-transparent.png"
+        style="vertical-align: middle; width: 80%; height: auto; max-width: 400px;"
     />
 </p>
+
+<h2 align="center">BACKEND</h2>
 
 <p align="center">
     <!-- Laravel -->
@@ -35,6 +29,7 @@
 ## Index
 1. [About this Backend](#headerThisBackend)
     * [OAuth 2.0](#headerOAuth2)
+    * [Deployment](#headerDeployment)
 2. [Laravel](#headerLaravel)
 3. [Npm](#headerNpm)
 4. [License](#headerLicense)
@@ -46,6 +41,64 @@ This backend provides an API for dealing with the database information. It uses 
 ### <a name="headerOAuth2"></a> OAuth 2.0
 
 The OAuth 2.0 Authorization Framework, defined in the [RFC-6749][], provides authorization control for all kinds of applications, wether they may be web or desktop based.
+
+### <a name="headerDeployment"></a> Deployment
+
+This guide takes into account that the web server has been previously configured.
+To successfully deploy this backend, you must:
+1. Properly configure the **.env** file.
+```
+APP_ENV=production
+APP_DEBUG=false
+...
+APP_URL=https://...
+...
+DB_CONNECTION=... <- wether it is mysql or other DB
+DB_HOST=... <- host (IP) in charge of the DB
+DB_PORT=...
+DB_DATABASE=... <- name of the DB
+DB_USERNAME=...
+DB_PASSWORD=...
+...
+QUEUE_CONNECTION=database
+...
+MAIL_DRIVER=smtp
+MAIL_HOST=...
+MAIL_PORT=...
+MAIL_USERNAME=... <- email account
+MAIL_PASSWORD=...
+MAIL_ENCRYPTION=... <- SSL/TLS/STARTTLS...
+MAIL_FROM_ADDRESS=... <- email account
+MAIL_FROM_NAME="${APP_NAME}"
+...
+```
+2. Generate application keys.
+```php
+php artisan key:generate
+```
+3. Migrate the database.
+```php
+php artisan migrate
+```
+4. Optimize autoloader.
+```php
+composer install --optimize-autoloader --no-dev
+```
+5. Optimize configurations.
+```php
+php artisan config:cache
+```
+6. Optimize API routes.
+```php
+php artisan route:cache
+```
+7. Precompile views.
+```php
+php artisan view:cache
+```
+8. Install & configure [supervisor](https://laravel.com/docs/5.1/queues#supervisor-configuration).
+This will take care of the queued jobs such as email sending.
+9. Ready to go!
 
 ### <a name="headerLaravel"></a> 2. About Laravel
 
