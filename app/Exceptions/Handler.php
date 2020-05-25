@@ -77,6 +77,8 @@ class Handler extends ExceptionHandler
                 $message = 'Too many requests';
                 $error_number = Response::HTTP_TOO_MANY_REQUESTS;
             break;
+            case AuthenticationException::class:
+                return $this->unauthenticated($request, $exception);
         }
 
         return response()->json([
