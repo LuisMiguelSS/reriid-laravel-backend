@@ -10,6 +10,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\File\FileController;
+use App\Notifications\VerifyEmailQueued;
+use Swift_TransportException;
 
 class AuthController extends Controller {
 
@@ -125,17 +127,28 @@ class AuthController extends Controller {
                 }
             }
 
+            // Send verification mail
+            $user->sendEmailVerificationNotification();
+
             $user->save();
             
             return response()->json([
-                'message' => 'User created succesfully!',
+                'verification_link_expiry' => VerifyEmailQueued::VERIFICATION_LINK_EXPIRY . ' minutes',
                 'data' => $user,
                 'access_token' => $accessToken
             ], Response::HTTP_CREATED);
             
         } catch (\Throwable $th) {
+            $user->forceDelete();
+
+            $errors = array('The user could not be created.');
+
+            if ($th instanceof Swift_TransportException) {
+                array_push($errors, 'We could not send the verification mail.');
+            }
+
             return response()->json([
-                'errors' => ['The user could not be added.']
+                'errors' => $errors
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
