@@ -104,29 +104,33 @@ MAIL_FROM_NAME="${APP_NAME}"
 ```php
 php artisan key:generate
 ```
-3. Migrate the database.
+3. Install [Passport][].
 ```php
-php artisan migrate
+php artisan passport:install
 ```
-4. Optimize autoloader.
+4. Migrate the database.
+```php
+php artisan migrate --force
+```
+5. Optimize autoloader.
 ```php
 composer install --optimize-autoloader --no-dev
 ```
-5. Optimize configurations.
+6. Optimize configurations.
 ```php
 php artisan config:cache
 ```
-6. Optimize API routes.
+7. Optimize API routes.
 ```php
 php artisan route:cache
 ```
-7. Precompile views.
+8. Precompile views.
 ```php
 php artisan view:cache
 ```
-8. Install & configure [supervisor](https://laravel.com/docs/5.1/queues#supervisor-configuration).
+9. Install & configure [supervisor](https://laravel.com/docs/5.1/queues#supervisor-configuration).
 This will take care of the queued jobs such as email sending.
-9. Ready to go!
+10. Ready to go!
 
 ### <a name="headerLaravel"></a> 2. About Laravel
 
