@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Notifications\VerifyEmailQueued;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -70,4 +71,17 @@ class User extends Authenticatable implements MustVerifyEmail
         });
 
     }
+
+    /**
+     * Override of the sendEmailVerificationNotification method function
+     * Queues verification mails to fasten up the API response time.
+     * 
+     * @return void
+     * 
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new VerifyEmailQueued);
+    }
+
 }
