@@ -29,6 +29,7 @@
 ## Index
 1. [About this Backend](#headerThisBackend)
     * [OAuth 2.0](#headerOAuth2)
+    * [Testing](#headerTesting)
     * [Deployment](#headerDeployment)
 2. [Laravel](#headerLaravel)
 3. [Npm](#headerNpm)
@@ -41,6 +42,33 @@ This backend provides an API for dealing with the database information. It uses 
 ### <a name="headerOAuth2"></a> OAuth 2.0
 
 The OAuth 2.0 Authorization Framework, defined in the [RFC-6749][], provides authorization control for all kinds of applications, wether they may be web or desktop based.
+
+### <a name="headerTesting"></a> Testing
+
+In order to test locally firstly you'll need to have a working web server and database.
+1. Configuring the **.env** file.
+You may use the same configuration from [Deployment](#headerDeployment) but you **must** change the following variables as follows:
+
+```
+APP_ENV=development
+APP_DEBUG=true
+...
+```
+2. Install [Passport][].
+```php
+php artisan passport:install
+```
+3. If after the install you don't have any keys stored in the **.env** file under the ```APP_KEY``` variable, you must run:
+```php
+php artisan key:generate
+```
+4. Run the migrations.
+```php
+php artisan migrate
+```
+5. Running the live server.
+- Use the command ```php artisan serve```
+- On a new terminal execute ```php artisan queue:work --queue=email```
 
 ### <a name="headerDeployment"></a> Deployment
 
