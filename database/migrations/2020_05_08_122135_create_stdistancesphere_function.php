@@ -30,7 +30,7 @@ class CreateStdistancesphereFunction extends Migration
          * 
          */
         DB::unprepared(
-            'CREATE FUNCTION st_distance_sphere IF NOT EXISTS (point1 POINT, point2 POINT)
+            'CREATE FUNCTION IF NOT EXISTS st_distance_sphere (point1 POINT, point2 POINT)
             RETURNS decimal(10,2)
             BEGIN
             return 6371000 * 2 * ASIN(SQRT(
