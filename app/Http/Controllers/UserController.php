@@ -89,7 +89,12 @@ class UserController extends Controller
      */
     public function showdeleted($id)
     {
-        return response()->json(['data' => User::onlyTrashed()->where('id', $id)->firstOrFail()]);
+        return response()->json([
+            'data' => User::onlyTrashed()
+                            ->where('id', $id)
+                            ->firstOrFail()
+            ]
+        );
     }
 
     /**
