@@ -8,6 +8,9 @@ use Illuminate\Http\Response;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Illuminate\Support\Facades\Log;
+use ReflectionClass;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -65,20 +68,39 @@ class Handler extends ExceptionHandler
                 $message = 'The given route was not found';
                 $error_number = Response::HTTP_NOT_FOUND;
             break;
+
             case ModelNotFoundException::class:
-                $message = 'The given object does not exist.';
+
+                $model = 'object';
+                
+                // Avoid 'getModel()' method error display
+                if ($exception instanceof ModelNotFoundException) {
+                    $model = (new ReflectionClass($exception->getModel()))->getShortName();
+                }
+
+                $message = 'The given '. $model .' does not exist.';
                 $error_number = Response::HTTP_NOT_FOUND;
             break;
+
             case MethodNotAllowedHttpException::class:
                 $message = 'Wrong method {' . $request->method() . '}';
                 $error_number = Response::HTTP_METHOD_NOT_ALLOWED;
             break;
+
             case TooManyRequestsHttpException::class:
                 $message = 'Too many requests';
                 $error_number = Response::HTTP_TOO_MANY_REQUESTS;
             break;
+
             case AuthenticationException::class:
                 return $this->unauthenticated($request, $exception);
+
+            case InvalidSignatureException::class:
+                return $this->invalid_signature($request, $exception);
+
+            default:
+                Log::channel('single')->error($exception);
+            break;
         }
 
         return response()->json([
@@ -87,7 +109,6 @@ class Handler extends ExceptionHandler
             'user_agent' => $request->userAgent(),
             'timestamp' => Carbon::now(),
             'path' => $request->fullUrl(),
-            'user_agent' => $request->userAgent(),
         ], $error_number);
 
     }
@@ -97,6 +118,15 @@ class Handler extends ExceptionHandler
         return response()->json([
             'errors' => [
                 'Unauthenticated'
+                ]
+        ], Response::HTTP_UNAUTHORIZED);
+    }
+
+    protected function invalid_signature($request, InvalidSignatureException $exception)
+    {
+        return response()->json([
+            'errors' => [
+                    'Invalid signature'
                 ]
         ], Response::HTTP_UNAUTHORIZED);
     }
