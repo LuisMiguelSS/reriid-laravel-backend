@@ -7,6 +7,7 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvi
 
 class RouteServiceProvider extends ServiceProvider
 {
+    const ROUTES_FOLDER = 'routes/';
     const API_ROUTES_FOLDER = 'routes/api/';
 
     /**
@@ -35,6 +36,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function map()
     {
+        $this->mapSiteRoutes();
         $this->mapApiRoutes();
     }
 
@@ -48,7 +50,10 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapApiRoutes()
     {
         Route::group([
-            'middleware' => 'api',
+            'middleware' => [
+                'api',
+                'apikey.validate'
+            ],
             'namespace' => $this->namespace
         ], function () {
             
@@ -67,11 +72,18 @@ class RouteServiceProvider extends ServiceProvider
 
             // Admin API
             Route::domain('admin.localhost')
-                 ->middleware('apikey.validate')
                  ->group(
                      base_path(self::API_ROUTES_FOLDER . 'admin.php')
                  );
         });
 
+    }
+    
+    public function mapSiteRoutes()
+    {
+        Route::namespace($this->namespace)
+             ->group(
+                 base_path(self::ROUTES_FOLDER . 'site.php')
+             );
     }
 }
