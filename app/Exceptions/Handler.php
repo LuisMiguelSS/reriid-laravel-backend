@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Support\Facades\Log;
 use ReflectionClass;
@@ -89,6 +90,11 @@ class Handler extends ExceptionHandler
 
             case TooManyRequestsHttpException::class:
                 $message = 'Too many requests';
+                $error_number = Response::HTTP_TOO_MANY_REQUESTS;
+            break;
+
+            case ThrottleRequestsException::class:
+                $message = 'Too many attempts';
                 $error_number = Response::HTTP_TOO_MANY_REQUESTS;
             break;
 
