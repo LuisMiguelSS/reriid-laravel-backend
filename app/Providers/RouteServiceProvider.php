@@ -50,15 +50,12 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapApiRoutes()
     {
         Route::group([
-            'middleware' => [
-                'api',
-                'apikey.validate'
-            ],
             'namespace' => $this->namespace
         ], function () {
             
             // Public API
             Route::domain('api.localhost')
+                 ->middleware(['api', 'apikey.validate'])
                  ->prefix('partner')
                  ->group(
                     base_path(self::API_ROUTES_FOLDER . 'partner.php')
@@ -66,12 +63,14 @@ class RouteServiceProvider extends ServiceProvider
     
             // Internal API
             Route::domain('api.localhost')
+                 ->middleware(['apikey.validate']) // The API middleware is defined inside as of max throttling issues
                  ->group(
                     base_path(self::API_ROUTES_FOLDER . 'internal.php')
                  );
 
             // Admin API
             Route::domain('admin.localhost')
+                 ->middleware(['api', 'apikey.validate'])
                  ->group(
                      base_path(self::API_ROUTES_FOLDER . 'admin.php')
                  );
