@@ -15,6 +15,10 @@ use Swift_TransportException;
 
 class AuthController extends Controller {
 
+    public function validToken(Request $request) {
+        return true;
+    }
+
     public function login(Request $request) {
         
         try {
@@ -53,7 +57,7 @@ class AuthController extends Controller {
             $token = $tokenResult->token;
     
             if ($request->remember_me)
-                $token->expires_at = Carbon::now()->addWeeks(1);
+                $token->expires_at = Carbon::now()->addMonths(1);
     
             $token->save();
     
