@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\File\FileController;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PostController extends Controller
 {
@@ -28,6 +29,17 @@ class PostController extends Controller
      */
     public function get_posts_user($id) {
         return Post::all()->where('user_id', $id);
+    }
+
+    // Custom Paginator
+    public function arrayPaginator($array, Request $request) {
+        $page = $request->get('page', '1');
+        $per_page = 10;
+        $offset = ($page * $per_page) - $per_page;
+
+        return new LengthAwarePaginator(array_slice($array, $offset, $per_page, true),
+                                        count($array), $per_page, $page,
+                                        ['path' => $request->url(), 'query' => $request->query()]);
     }
 
 
@@ -182,10 +194,12 @@ class PostController extends Controller
                 }
             }
 
-            return response()->json([
+            return $this->arrayPaginator($posts, $request);
+
+            /*return response()->json([
                 'count' => $number_of_results,
                 'data' => $posts
-            ]);
+            ]);*/
 
         } catch(QueryException $queryException) {
             return response()->json([
@@ -217,7 +231,7 @@ class PostController extends Controller
      * 
      */
     public function showuser($userid) {
-        $posts = self::get_posts_user($userid);
+        $posts = $this->get_posts_user($userid);
         $count = count($posts);
 
         if ($count == 0) {
@@ -259,7 +273,7 @@ class PostController extends Controller
         }
 
         // Count user posts and see if it exceeds the maximum
-        if (count(self::get_posts_user($request->user_id)) >= self::MAX_POSTS_PER_USER) {
+        if (count($this->get_posts_user($request->user_id)) >= self::MAX_POSTS_PER_USER) {
             return response()->json([
                 'errors' => ['Maximum number of posts per user ('. self::MAX_POSTS_PER_USER .') reached.']
             ], Response::HTTP_CONFLICT);
