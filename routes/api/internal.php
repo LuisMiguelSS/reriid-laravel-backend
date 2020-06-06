@@ -36,6 +36,8 @@ Route::group(['middleware' => 'api'], function () {
         ]
     ], function () {
 
+    Route::post('login', 'Auth\AuthController@validToken')->name('check.validToken');
+
     // Users
     Route::group(['prefix' => 'users'], function () {
         Route::get('', 'UserController@index')->name('users');
