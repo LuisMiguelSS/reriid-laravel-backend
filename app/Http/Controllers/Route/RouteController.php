@@ -14,6 +14,10 @@ class RouteController extends Controller
     }
 
     public function notFound(Request $request) {
+        if (!$request->wantsJson()) {
+            return view('errors.404');
+        }
+
         return response()->json([
             'message' => 'The given API route was not found',
             'is_secure' => $request->secure(),

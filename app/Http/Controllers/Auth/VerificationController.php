@@ -101,6 +101,10 @@ class VerificationController extends Controller
             event(new Verified($request->user()));
         }
 
-        return response(['message'=>'The email has been successfully verified']);
+        if ($request->wantsJson()) {
+            return response(['message'=>'The email has been successfully verified']);
+        } else {
+            
+        }
     }
 }

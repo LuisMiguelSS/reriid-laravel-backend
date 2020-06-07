@@ -66,11 +66,20 @@ class Handler extends ExceptionHandler
 
         switch(get_class($exception)) {
             case NotFoundHttpException::class:
+
+                if (!$request->wantsJson()) {
+                    return view('errors.404');
+                }
+
                 $message = 'The given route was not found';
                 $error_number = Response::HTTP_NOT_FOUND;
             break;
 
             case ModelNotFoundException::class:
+
+                if (!$request->wantsJson()) {
+                    return view('errors.404');
+                }
 
                 $model = 'object';
                 
@@ -89,22 +98,47 @@ class Handler extends ExceptionHandler
             break;
 
             case TooManyRequestsHttpException::class:
+                
+                if (!$request->wantsJson()) {
+                    return view('errors.429');
+                }
+
                 $message = 'Too many requests';
                 $error_number = Response::HTTP_TOO_MANY_REQUESTS;
             break;
 
             case ThrottleRequestsException::class:
+                
+                if (!$request->wantsJson()) {
+                    return view('errors.429');
+                }
+
                 $message = 'Too many attempts';
                 $error_number = Response::HTTP_TOO_MANY_REQUESTS;
             break;
 
             case AuthenticationException::class:
+                
+                if (!$request->wantsJson()) {
+                    return view('errors.401');
+                }
+
                 return $this->unauthenticated($request, $exception);
 
             case InvalidSignatureException::class:
+                
+                if (!$request->wantsJson()) {
+                    return view('errors.401');
+                }
+
                 return $this->invalid_signature($request, $exception);
 
             default:
+
+                if (!$request->wantsJson()) {
+                    return view('errors.500');
+                }
+
                 Log::channel('single')->error($exception->getMessage());
             break;
         }
