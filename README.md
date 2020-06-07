@@ -129,7 +129,7 @@ php artisan route:cache
 php artisan view:cache
 ```
 9. Install & configure [supervisor](https://laravel.com/docs/5.1/queues#supervisor-configuration).
-This will take care of the queued jobs such as email sending.
+This will take care of the queued jobs such as email sending and the websocket for the realtime chat.
 10. Ready to go!
 
 ### <a name="headerLaravel"></a> 2. About Laravel
