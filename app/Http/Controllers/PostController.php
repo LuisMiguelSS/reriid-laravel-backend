@@ -123,6 +123,8 @@ class PostController extends Controller
      */
     public function nearby(Request $request) {
         $using_km = true;
+        $latitude_from = 0;
+        $longitude_from = 0;
 
         // Measurement unit
         if ($request->unit) {
@@ -145,6 +147,24 @@ class PostController extends Controller
         }
 
         $user = $request->user();
+
+        if ( ($request->lat || $request->latitude) && ($request->long || $request->longitude)) {
+            if ($request->lat) {
+                $latitude_from = $request->lat;
+            } else {
+                $latitude_from = $request->latitude;
+            }
+
+            if ($request->long) {
+                $longitude_from = $request->long;
+            } else {
+                $longitude_from = $request->longitude;
+            }
+
+        } else {
+            $latitude_from = $user->latitude == null? 0 : $user->latitude;
+            $longitude_from = $user->longitude == null? 0 : $user->longitude;
+        }
         
         try {
 
@@ -167,8 +187,8 @@ class PostController extends Controller
                         and u.longitude IS NOT NULL
                     HAVING distance <= :max_distance'
             , [
-                'long_from' => $user->longitude,
-                'lat_from' => $user->latitude,
+                'long_from' => $longitude_from,
+                'lat_from' => $latitude_from,
                 'current_user_id' => $user->id,
                 'max_distance' => $distance
             ]);
