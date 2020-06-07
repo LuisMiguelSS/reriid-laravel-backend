@@ -105,7 +105,7 @@ class Handler extends ExceptionHandler
                 return $this->invalid_signature($request, $exception);
 
             default:
-                Log::channel('single')->error($exception);
+                Log::channel('single')->error($exception->getMessage());
             break;
         }
 
