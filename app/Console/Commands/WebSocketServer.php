@@ -23,7 +23,7 @@ class WebSocketServer extends Command
      * 
      * @var int
      */
-    protected static $port = 5010;
+    protected static $port = 50100;
 
     /**
      * The console command description.
