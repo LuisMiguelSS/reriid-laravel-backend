@@ -24,7 +24,7 @@ Route::group(['middleware' => 'api'], function () {
     Route::group(['prefix' => 'auth'], function () {
         Route::post('register', 'Auth\AuthController@register')->name('register');
         Route::post('email/resend', 'Auth\VerificationController@resend')->name('verification.resend');
-        Route::post('login', 'Auth\AuthController@login')->name('login'); // This also needs email verification but it's implemented inside the login function
+        Route::post('login', 'Auth\AuthController@login')->name('auth.login'); // This also needs email verification but it's implemented inside the login function
     });
 
 
