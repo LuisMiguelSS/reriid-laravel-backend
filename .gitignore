@@ -13,3 +13,4 @@ yarn-error.log
 *.txt
 *.rnd
 package-lock.json
+.rnd
