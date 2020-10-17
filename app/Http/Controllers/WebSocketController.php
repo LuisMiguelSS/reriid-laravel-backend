@@ -56,14 +56,14 @@ class WebSocketController extends Controller implements MessageComponentInterfac
                     }
                     
                     $this->connections[$from->resourceId]['username'] = $message['data']['username'];
-                    $from->send(json_encode(['Username successfully set.']));
+                    $from->send(json_encode('Username successfully set.'));
 
                 break;
                 case 'send-message':
 
                     // Check user has username
                     if (!$this->hasUsername($from)) {
-                        $from->send(json_encode(['error' => 'An username must be set.']));
+                        $from->send(json_encode(['error' => 'A username must be set.']));
                         return;
                     }
 
@@ -84,6 +84,7 @@ class WebSocketController extends Controller implements MessageComponentInterfac
                         if (isset($connection['username'])) {
                             if ($connection['username'] == $message['data']['to']) {
                                 $connection['conn']->send(json_encode([
+                                    'realId' => $message['data']['realId'],
                                     'from' => $this->getUsername($from),
                                     'message' => $message['data']['message'],
                                     'timestamp' => (new DateTime())->format('c')
@@ -94,6 +95,10 @@ class WebSocketController extends Controller implements MessageComponentInterfac
 
                     }
                     $from->send(json_encode(['error' =>'User is not available.']));
+
+                default:
+                    $from->send(json_encode(['error' => 'Unsupported action type.']));
+                    break;
             }
         }
     }
