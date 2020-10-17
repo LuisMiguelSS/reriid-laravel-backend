@@ -29,7 +29,7 @@ class CreatePostsTable extends Migration
             $table->string('book_synopsis')->nullable();
             $table->bigInteger('book_isbn')->unsigned()->nullable();
             $table->string('book_author')->nullable();
-            $table->string('book_price')->nullable();
+            $table->double('book_price')->nullable();
             
             $table->softDeletes();
             $table->timestamps();
