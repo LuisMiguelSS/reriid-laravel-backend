@@ -173,8 +173,8 @@ class PostController extends Controller
                         p.id as post_id,
                         p.book_title as post_title,
                         p.images as post_images,
+                        p.book_price as price,
                         u.username,
-                        u.profile_pic as user_profile_pic,
                         (st_distance_sphere(
                             point(:long_from, :lat_from),
                             point(u.longitude, u.latitude)
@@ -215,11 +215,6 @@ class PostController extends Controller
             }
 
             return $this->arrayPaginator($posts, $request);
-
-            /*return response()->json([
-                'count' => $number_of_results,
-                'data' => $posts
-            ]);*/
 
         } catch(QueryException $queryException) {
             return response()->json([
@@ -278,12 +273,13 @@ class PostController extends Controller
             'user_id' => 'required|numeric',
             'description' => 'required|string|max:400',
             'images' => 'required|array',
-            'images.*' => 'max:2048|file|mimes:jpg,jpeg,png,gif',
+            'images.*' => 'max:4096|image|mimes:jpg,jpeg,png,gif',
             'book_title' => 'required|string',
             'book_subtitle' => 'string',
             'book_synopsis' => 'string',
             'book_isbn' => 'numeric',
-            'book_author' => 'string'
+            'book_author' => 'string',
+            'price' => 'required|numeric'
         ]);
 
         if ($validator->fails()) {
@@ -306,6 +302,7 @@ class PostController extends Controller
             $post->user_id = $request->user_id;
             $post->description = $request->description;
             $post->book_title = $request->book_title;
+            $post->book_price = $request->price;
 
             // Optional fields
             if ($request->book_subtitle) {
@@ -331,7 +328,7 @@ class PostController extends Controller
 
                     // Check the image array
                     $validator = Validator::make($request->all(), [
-                        'images.*' => 'required|max:2048|file|mimes:jpg,jpeg,png,gif'
+                        'images.*' => 'required|max:4096|file|mimes:jpg,jpeg,png,gif'
                     ]);
 
                     if ($validator->fails()) {
@@ -391,6 +388,10 @@ class PostController extends Controller
                 $post->description = $request->description;
             }
 
+            if ($request->price) {
+                $post->book_price = $request->price;
+            }
+
             if ($request->reserved && is_numeric($request->reserved)) {
                 $post->reserved = $request->reserved;
             }
@@ -423,11 +424,12 @@ class PostController extends Controller
             // Max photos per post
             if (count(json_decode($post->images)) < self::MAX_FILES_PER_POST) {
                 if ($request->hasFile('images')) {
+                    
                     try {
     
                         // Check the image array
                         $validator = Validator::make($request->all(), [
-                            'images.*' => 'required|max:2048|file|mimes:jpg,jpeg,png,gif'
+                            'images.*' => 'required|max:4096|file|mimes:jpg,jpeg,png,gif'
                         ]);
 
                         if ($validator->fails()) {
@@ -499,6 +501,7 @@ class PostController extends Controller
                 if (File::deleteDirectory(public_path('uploads/user/' . $post->user_id . '/post\/' . $id))) {
                     $post->images = null;
                     $post->save();
+
                 } else {
                     return response()->json([
                         'errors' => ['The post images could not be deleted']
