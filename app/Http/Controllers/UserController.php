@@ -11,6 +11,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\File\FileController;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -134,7 +136,6 @@ class UserController extends Controller
                 $user->latitude = $request->latitude;
                 $request_empty = false;
             }
-
             if ($request->lat) {
                 $user->latitude = $request->lat;
                 $request_empty = false;
@@ -157,7 +158,7 @@ class UserController extends Controller
 
                     // Check the image
                     $validator = Validator::make($request->all(), [
-                        'photo' => 'max:2048|file|mimes:jpg,jpeg,png,gif',
+                        'photo' => 'max:4096|file|mimes:jpg,jpeg,png,gif',
                     ]);
 
                     if ($validator->fails()) {
@@ -186,6 +187,7 @@ class UserController extends Controller
                         'errors' => 'No content was provided'
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
+                
                 return response()->json([
                     'data' => $user
                 ], Response::HTTP_OK);
