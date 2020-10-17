@@ -8,6 +8,7 @@ use Throwable;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Log;
 
 class FileController extends Controller
 {
@@ -16,35 +17,40 @@ class FileController extends Controller
      * and stores the given image in it.
      * 
      * @param User $user
-     * @param string $file
+     * @param Input $file
      * 
      * @return url The url of the saved file or null if there was a problem.
      * 
      */
     public static function store_profilepic(User $user, $file)
     {
-        if ($user == null || $file == null) {
+        try {
+            if ($user == null || $file == null) {
+                return null;
+            }
+    
+            $user_storage_folder = public_path() . '/uploads/user/' . $user->id . '/';
+    
+            // Check if user folder exists
+            if (!File::exists($user_storage_folder)) {
+                File::makeDirectory($user_storage_folder, 0755, true);
+            }
+    
+            // Store (and replace if necessary) file
+            $filename = $user->id . '-profile-' . date('d_M_Y') . '.' . $file->getClientOriginalExtension();
+    
+            if (File::exists($user_storage_folder . $filename)) {
+                File::delete($user_storage_folder . $filename);
+            }
+    
+            // Store file
+            $file->move($user_storage_folder, $filename);
+    
+            return url('uploads/user/' . $user->id . '/' . $filename);
+        } catch(Throwable $exception) {
+            Log::debug('Error trying to store user image:\n' . $exception);
             return null;
         }
-
-        $user_storage_folder = public_path() . '/uploads/user/' . $user->id . '/';
-
-        // Check if user folder exists
-        if (!File::exists($user_storage_folder)) {
-            File::makeDirectory($user_storage_folder, 0755, true);
-        }
-
-        // Store (and replace if necessary) file
-        $filename = $user->id . '-profile-' . date('d_M_Y') . '.' . $file->getClientOriginalExtension();
-
-        if (File::exists($user_storage_folder . $filename)) {
-            File::delete($user_storage_folder . $filename);
-        }
-
-        // Store file
-        $file->move($user_storage_folder, $filename);
-
-        return url('uploads/user/' . $user->id . '/' . $filename);
     }
 
     /**
@@ -62,7 +68,7 @@ class FileController extends Controller
         }
 
         try {
-            $post_storage_folder = public_path() . '/uploads/user/'. $post->user_id . '\/post/' . $post->id . '/';
+            $post_storage_folder = public_path() . '/uploads/user/'. $post->user_id . '/post/' . $post->id . '/';
 
             // Check if Post folder exists
             if (!File::exists($post_storage_folder)) {
@@ -80,7 +86,7 @@ class FileController extends Controller
             // Store file
             $file->move($post_storage_folder, $filename);
 
-            return url('uploads/user/'. $post->user_id . '\/post/' . $post->id . '/' . $filename);
+            return url('uploads/user/'. $post->user_id . '/post/' . $post->id . '/' . $filename);
 
         } catch(Throwable $throwable) {
             return null;
