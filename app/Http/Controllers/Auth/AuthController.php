@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\File\FileController;
 use App\Notifications\VerifyEmailQueued;
+use Illuminate\Support\Facades\File;
 use Swift_TransportException;
 
 class AuthController extends Controller {
@@ -37,8 +38,28 @@ class AuthController extends Controller {
                 return response()->json(['errors'=>$validator->errors()]);
             }
 
+            $deletedUser = User::onlyTrashed()->where($loginType, $login)->first();
+            if ($deletedUser) {
+                $deletedUser->restore();
+            }
+
             // Check if authentication fails
             if(!Auth::attempt([$loginType => $login, 'password' => $password])) {
+
+                if ($deletedUser) {
+                    // Manually softdelete the record again
+                    $deletedUser->delete();
+
+                    // Delete profile picture from disk
+                    if (File::exists(public_path($deletedUser->profile_pic))) {
+                        File::delete(public_path($deletedUser->profile_pic));
+
+                        // Update user entry
+                        $deletedUser->profile_pic = null;
+                        $deletedUser->save();
+                    }
+                }
+
                 return response()->json([
                     'errors' => ['Incorrect credentials']
                 ], Response::HTTP_UNAUTHORIZED);
