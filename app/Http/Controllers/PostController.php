@@ -276,7 +276,7 @@ class PostController extends Controller
             'user_id' => 'required|numeric',
             'description' => 'required|string|max:400',
             'images' => 'required|array',
-            'images.*' => 'max:4096|image|mimes:jpg,jpeg,png,gif',
+            'images.*' => 'max:'. FileController::MAX_FILE_SIZE .'|image|mimes:'. implode(',', FileController::VALID_MIMES),
             'book_title' => 'required|string',
             'book_subtitle' => 'string',
             'book_synopsis' => 'string',
@@ -331,7 +331,7 @@ class PostController extends Controller
 
                     // Check the image array
                     $validator = Validator::make($request->all(), [
-                        'images.*' => 'required|max:4096|file|mimes:jpg,jpeg,png,gif'
+                        'images.*' => 'required|max:'. FileController::MAX_FILE_SIZE .'|file|mimes:'. implode(',', FileController::VALID_MIMES)
                     ]);
 
                     if ($validator->fails()) {
@@ -432,7 +432,7 @@ class PostController extends Controller
     
                         // Check the image array
                         $validator = Validator::make($request->all(), [
-                            'images.*' => 'required|max:4096|file|mimes:jpg,jpeg,png,gif'
+                            'images.*' => 'required|max:'. FileController::MAX_FILE_SIZE .'|file|mimes:jpg,jpeg,png,gif'
                         ]);
 
                         if ($validator->fails()) {

@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class FileController extends Controller
 {
-    
+    public const MAX_FILE_SIZE = 4096;
+    public const VALID_MIMES = array('jpg', 'jpeg', 'png', 'gif');
 
     /**
      * Creates (if needed) a folder for the user

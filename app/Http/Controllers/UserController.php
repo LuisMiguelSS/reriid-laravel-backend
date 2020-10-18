@@ -158,7 +158,7 @@ class UserController extends Controller
 
                     // Check the image
                     $validator = Validator::make($request->all(), [
-                        'photo' => 'max:4096|file|mimes:jpg,jpeg,png,gif',
+                        'photo' => 'max:'. FileController::MAX_FILE_SIZE .'|file|mimes:'. implode(',', FileController::VALID_MIMES),
                     ]);
 
                     if ($validator->fails()) {
