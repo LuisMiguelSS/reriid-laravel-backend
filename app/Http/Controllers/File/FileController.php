@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class FileController extends Controller
 {
+    
+
     /**
      * Creates (if needed) a folder for the user
      * and stores the given image in it.

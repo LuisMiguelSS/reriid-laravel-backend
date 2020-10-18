@@ -38,8 +38,11 @@ class PostController extends Controller
         $offset = ($page * $per_page) - $per_page;
 
         return new LengthAwarePaginator(array_slice($array, $offset, $per_page, true),
-                                        count($array), $per_page, $page,
-                                        ['path' => $request->url(), 'query' => $request->query()]);
+                                        count($array),
+                                        $per_page,
+                                        $page,
+                                        ['path' => $request->url(), 'query' => $request->query()]
+                                    );
     }
 
 
