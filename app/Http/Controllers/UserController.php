@@ -11,15 +11,13 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\File\FileController;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
     /**
-     * Returns the available users in the DB
+     * Returns the available users.
      * 
-     * @return \Illuminate\Http\Response List of active users (not deleted)
+     * @return \Illuminate\Http\Response List of users (not deleted).
      * 
      */
     public function index()
@@ -34,9 +32,9 @@ class UserController extends Controller
     }
 
     /**
-     * Finds the soft deleted users in the DB
+     * Finds the soft deleted users.
      * 
-     * @return \Illuminate\Http\Response List of deleted users
+     * @return \Illuminate\Http\Response List of the deleted users.
      * 
      */
     public function indexdeleted()
@@ -53,7 +51,7 @@ class UserController extends Controller
     /**
      * Restores the soft deleted record.
      * 
-     * @param $id The user's id
+     * @param $id The user's id.
      * 
      * @return \Illuminate\Http\Response
      */
@@ -69,9 +67,9 @@ class UserController extends Controller
     }
 
     /**
-     * Gets the given user's info
+     * Gets the given user's data.
      * 
-     * @param $id The user's id
+     * @param $id The user's id.
      * 
      * @return \Illuminate\Http\Response
      * 
@@ -82,9 +80,9 @@ class UserController extends Controller
     }
     
     /**
-     * Gets the given deleted user's info
+     * Gets the given deleted user's data.
      * 
-     * @param $id The user's id
+     * @param $id The user's id.
      * 
      * @return \Illuminate\Http\Response
      * 
@@ -102,10 +100,10 @@ class UserController extends Controller
     /**
      * Updates the given user's data.
      * 
-     * @param \Illuminate\Http\Request The request received from the API
-     * @param $id The user's id
+     * @param \Illuminate\Http\Request The request received from the API.
+     * @param $id The user's id.
      * 
-     * @return \Illuminate\Http\Response The updated user if it succeeds
+     * @return \Illuminate\Http\Response The updated user if it succeeds.
      */
     public function update(Request $request, $id)
     {
@@ -203,7 +201,7 @@ class UserController extends Controller
     /**
      * Soft deletes the user and its posts.
      * 
-     * @param $id The user's id
+     * @param $id The user's id.
      * @return Response
      * 
      */
@@ -238,7 +236,7 @@ class UserController extends Controller
     /**
      * Hard deletes the user and its posts.
      * 
-     * @param $id The user's id
+     * @param $id The user's id.
      * @return Response
      * 
      */
