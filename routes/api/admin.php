@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::any('/', 'Route\RouteController@hello')->name('admin.admin.alive');
 
-// User related routes
+// Users
 Route::group(['prefix' => 'users'], function () {
 
     Route::get('', 'UserController@index')->name('admin.users');

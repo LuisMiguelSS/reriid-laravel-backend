@@ -69,6 +69,18 @@ php artisan migrate
 5. Running the live server.
 - Use the command ```php artisan serve```
 - On a new terminal execute ```php artisan queue:work --queue=email```
+6. Initialize the Websocket server
+```php
+php artisan websocket:init
+```
+
+Or, in short:
+```php
+php artisan serve
+php artisan serve --host=my.local.network.serverIp --port=8000
+php artisan queue:work --queue=email
+php artisan websocket:init
+```
 
 ### <a name="headerDeployment"></a> Deployment
 
